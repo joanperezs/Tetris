@@ -51,10 +51,11 @@ const COLORES = [
 
 const FILAS = 20;
 const COLUMNAS = 10;
-
+let puntuacion = document.querySelector("h2");
 let canvas = document.querySelector("#tetris");
-let ctx = canvas.getContext("2d");
+let ctx = canvas.getContext("2d"); 
 ctx.scale(30, 30);
+let puntos = 0;
 
 
 function generarPiezaRandom(){
@@ -97,6 +98,12 @@ function moverAbajo(){
             }
             
         }
+        if(piezaObjeto.y == 0){
+            alert("GAME OVER");
+            grid = generarGrid();
+            score = 0;
+            
+        }
         piezaObjeto = null;
     }
     renderizarGrid();
@@ -122,6 +129,7 @@ function moverDer(){
 
 
 function nuevoEstadoJuego(){
+    consultarGrid();
     if(piezaObjeto == null){
         piezaObjeto = generarPiezaRandom();
         renderizarPieza();
@@ -142,6 +150,35 @@ function generarGrid(){
     return grid;
 }
 
+function consultarGrid(){
+    let filas = 0;
+    for (let i = 0; i < grid.length; i++) {
+        let filaLlena = true;
+        for (let j = 0; j < grid[i].length; j++) {
+            if(grid[i][j] == 0){
+                filaLlena = false;
+            }
+            
+        }
+        if(filaLlena){
+            grid.splice(i, 1);
+            grid.unshift([0,0,0,0,0,0,0,0,0,0]);
+            filas++;
+        }   
+    }
+
+    if(filas == 1){
+        puntos+=10;
+    } else if (filas == 2){
+        puntos+=30;
+    } else if (filas == 3){
+        puntos+=50;
+    } else if (filas > 3){
+        puntos+=100;
+    }
+    puntuacion.innerHTML = "Puntos: " + puntos;
+}
+
 function renderizarGrid(){
     for (let i = 0; i < grid.length; i++) {
         for (let j = 0; j < grid[i].length; j++) {
@@ -154,8 +191,8 @@ function renderizarGrid(){
     renderizarPieza();
 }
 
-function colision(x, y){
-    let pieza = piezaObjeto.pieza;
+function colision(x, y, piezaRotada){
+    let pieza = piezaRotada || piezaObjeto.pieza;
     for (let i = 0; i < pieza.length; i++) {
         for (let j = 0; j < pieza[i].length; j++) {
             if(pieza[i][j] == 1){
@@ -176,6 +213,47 @@ function colision(x, y){
     }
     return false;
 }
+
+let heldPiece = null; // initialize heldPiece as null
+
+// function to hold a piece
+function holdPiece() {
+  if (heldPiece === null) {
+    heldPiece = currentPiece;
+    currentPiece = nextPiece;
+    nextPiece = generateRandomPiece(); // generate a new next piece
+    drawNextPiece(); // update next piece display
+  } else {
+    // swap heldPiece and currentPiece
+    let tempPiece = heldPiece;
+    heldPiece = currentPiece;
+    currentPiece = tempPiece;
+  }
+  drawHeldPiece(); // update held piece display
+}
+
+// function to display the held piece
+function drawHeldPiece() {
+  let heldCanvas = document.getElementById('held-piece');
+  let heldCtx = heldCanvas.getContext('2d');
+  heldCtx.clearRect(0, 0, heldCanvas.width, heldCanvas.height); // clear the canvas
+
+  if (heldPiece !== null) {
+    let blockWidth = heldCanvas.width / 5;
+    let blockHeight = heldCanvas.height / 5;
+    for (let i = 0; i < heldPiece.blocks.length; i++) {
+      let block = heldPiece.blocks[i];
+      let x = block.col * blockWidth;
+      let y = block.row * blockHeight;
+      heldCtx.fillStyle = block.color;
+      heldCtx.fillRect(x, y, blockWidth, blockHeight);
+    }
+  }
+}
+
+
+
+
 let piezaObjeto = generarPiezaRandom();
 let grid = generarGrid();
 renderizarPieza();
@@ -184,16 +262,42 @@ setInterval(nuevoEstadoJuego, 500)
 
 document.addEventListener("keydown", function(e){
     let key = e.code;
+    console.log(key)
     if(key == "ArrowDown"){
         moverAbajo();
     } else if(key == "ArrowLeft"){
         moverIzq();
     } else if(key == "ArrowRight"){
         moverDer();
-    } else if(key == "C"){
+    } else if(key == "KeyC"){
         rotar();
     }
 
 })
 
-// https://www.youtube.com/live/F_7FxsF-jNM?feature=share&t=4028
+function rotar(){
+    let piezaRotada = [];
+    let pieza = piezaObjeto.pieza;
+    
+    for (let i = 0; i < pieza.length; i++) {
+        piezaRotada.push([]);
+        for (let j = 0; j < pieza[i].length; j++) {
+            piezaRotada[i].push(0);
+        }
+    }
+    for (let i = 0; i < pieza.length; i++) {
+        for (let j = 0; j < pieza[i].length; j++) {
+            piezaRotada[i][j] = pieza[j][i]
+        }
+    }
+
+    for (let i = 0; i < piezaRotada.length; i++) {
+        piezaRotada[i].reverse();
+    }
+
+    if(!colision(piezaObjeto.x, piezaObjeto.y, piezaRotada)){
+        piezaObjeto.pieza = piezaRotada;
+    }
+
+}
+
