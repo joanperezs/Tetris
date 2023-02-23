@@ -1,4 +1,4 @@
-const PIEZAS = [
+const PIEZAS = [    // Forma de las piezas
     [
         [0, 1, 0, 0],
         [0, 1, 0, 0],
@@ -38,7 +38,7 @@ const PIEZAS = [
     ],
 ]
 
-const COLORES = [
+const COLORES = [ // Lista de colores
     "#fff",
     '#9b5fe0',
     '#16a4d8',
@@ -49,6 +49,16 @@ const COLORES = [
     '#d64e12'
 ]
 
+const keyMap = { // Mapa de teclas
+    ArrowDown: moverAbajo,
+    ArrowLeft: moverIzq,
+    ArrowRight: moverDer,
+    KeyC: rotar,
+    KeyX: guardarPieza,
+};
+
+
+// Variables globales
 const FILAS = 20;
 const COLUMNAS = 10;
 let puntuacion = document.querySelector("h2");
@@ -58,8 +68,9 @@ ctx.scale(30, 30);
 let puntos = 0;
 
 
-function generarPiezaRandom(){
-    let random = Math.floor(Math.random()*7)
+function generarPiezaRandom(){ // Genera una pieza aleatoria.
+    piezaCambiada = false;
+    let random = Math.floor(Math.random()*7) // (Hay 7 piezas)
     let pieza = PIEZAS[random]
     let colorIndex = random+1;
     let x = 4;
@@ -68,48 +79,44 @@ function generarPiezaRandom(){
 }
 
 function renderizarPieza(){
-    let pieza = piezaObjeto.pieza;
-    for (let i = 0; i < pieza.length; i++) {
-        for (let j = 0; j < pieza[i].length; j++) {
-            if(pieza[i][j] == 1){
-                ctx.fillStyle = COLORES[piezaObjeto.colorIndex];
-                ctx.fillRect(piezaObjeto.x+j,piezaObjeto.y+i,1,1)
-            }   
-            
+    
+
+    piezaObjeto.pieza.some((fila, i) => fila.some((celula, j) => { // Recorre la pieza y pinta los 1. 
+        if(celula == 1){
+            ctx.fillStyle = COLORES[piezaObjeto.colorIndex];
+            ctx.fillRect(piezaObjeto.x+j,piezaObjeto.y+i,1,1)
         }
-    }
+    }));
+
 }
 
 function moverAbajo(){
-    if(!colision(piezaObjeto.x, piezaObjeto.y+1)){
+    if(!colision(piezaObjeto.x, piezaObjeto.y+1)){ // Si no hay colisión, se mueve hacia abajo
         piezaObjeto.y+=1;
     }
     else{
-        for (let i = 0; i < piezaObjeto.pieza.length; i++) {
-            for (let j = 0; j < piezaObjeto.pieza[i].length; j++) {
-                if(piezaObjeto.pieza[i][j] == 1){
-                    let p = piezaObjeto.x+j;
-                    let q = piezaObjeto.y+i;
-                    grid[q][p] = piezaObjeto.colorIndex;
-
-
-                }
-                
+        piezaObjeto.pieza.some((fila, i) => fila.some((celula, j) => {
+            if(celula == 1){
+                let p = piezaObjeto.x+j;
+                let q = piezaObjeto.y+i;
+                grid[q][p] = piezaObjeto.colorIndex; // Si hay colisión, se pinta la pieza en el grid
             }
-            
-        }
-        if(piezaObjeto.y == 0){
+        }));
+    
+
+        if(piezaObjeto.y == 0){ // Si la pieza llega a la parte superior del grid, se acaba el juego
             alert("GAME OVER");
             grid = generarGrid();
             score = 0;
             
         }
-        piezaObjeto = null;
+        piezaObjeto = null; // Se genera una nueva pieza
     }
     renderizarGrid();
 }
-function moverIzq(){
-    if (!colision(piezaObjeto.x-1,piezaObjeto.y)) {
+
+function moverIzq(){ 
+    if (!colision(piezaObjeto.x-1,piezaObjeto.y)) { // Si no hay colision, se mueve hacia la izquierda
         piezaObjeto.x-=1;
     }
 
@@ -117,9 +124,10 @@ function moverIzq(){
     renderizarGrid();
 
 }
-function moverDer(){
 
-    if (!colision(piezaObjeto.x+1,piezaObjeto.y)) {
+function moverDer(){ 
+
+    if (!colision(piezaObjeto.x+1,piezaObjeto.y)) { // Si no hay colision, se mueve hacia la derecha
         piezaObjeto.x+=1;
     }
 
@@ -128,7 +136,7 @@ function moverDer(){
 }
 
 
-function nuevoEstadoJuego(){
+function nuevoEstadoJuego(){ // Función para actualizar el juego
     consultarGrid();
     if(piezaObjeto == null){
         piezaObjeto = generarPiezaRandom();
@@ -137,7 +145,7 @@ function nuevoEstadoJuego(){
     moverAbajo();
 }
 
-function generarGrid(){
+function generarGrid(){ // Genera el grid
     let grid = []
     for (let i = 0; i < FILAS; i++) {
         grid.push([]);
@@ -150,36 +158,42 @@ function generarGrid(){
     return grid;
 }
 
-function consultarGrid(){
+function consultarGrid(){  // Consulta las piezas del grid
     let filas = 0;
     for (let i = 0; i < grid.length; i++) {
-        let filaLlena = true;
+        let filaLlena = true; 
         for (let j = 0; j < grid[i].length; j++) {
             if(grid[i][j] == 0){
                 filaLlena = false;
             }
             
         }
-        if(filaLlena){
+        if(filaLlena){ // Si la fila está llena, se elimina y se añade una fila vacía
             grid.splice(i, 1);
             grid.unshift([0,0,0,0,0,0,0,0,0,0]);
             filas++;
         }   
     }
 
-    if(filas == 1){
-        puntos+=10;
-    } else if (filas == 2){
-        puntos+=30;
-    } else if (filas == 3){
-        puntos+=50;
-    } else if (filas > 3){
-        puntos+=100;
+    switch (filas) { // Se añade una puntuación según las filas eliminadas
+        case 1:
+            puntos += 10;
+            break;
+        case 2:
+            puntos += 30;
+            break;
+        case 3:
+            puntos += 50;
+            break;
+        default:
+            puntos += filas * 100;
+            break;
     }
+    
     puntuacion.innerHTML = "Puntos: " + puntos;
 }
 
-function renderizarGrid(){
+function renderizarGrid(){ // Dibuja el grid con las piezas ya colocadas (si hay)
     for (let i = 0; i < grid.length; i++) {
         for (let j = 0; j < grid[i].length; j++) {
             ctx.fillStyle = COLORES[grid[i][j]];
@@ -191,65 +205,56 @@ function renderizarGrid(){
     renderizarPieza();
 }
 
-function colision(x, y, piezaRotada){
-    let pieza = piezaRotada || piezaObjeto.pieza;
-    for (let i = 0; i < pieza.length; i++) {
-        for (let j = 0; j < pieza[i].length; j++) {
-            if(pieza[i][j] == 1){
-                let p = x+j;
-                let q = y+i;
-                if(p>=0 && p<COLUMNAS && q<FILAS){
-                    if(grid[q][p]>0){
-                        return true;
-                    }
-                } else{
-                    return true;
-                }
-            }
-            
+
+function colision(x, y, piezaRotada = piezaObjeto.pieza){ // Función para comprobar si hay colisión
+    return piezaRotada.some((fila, i) => fila.some((celula, j) => { 
+        if(celula == 1){
+            const p = x + j;
+            const q = y + i;
+            return p < 0 || p >= COLUMNAS || q >= FILAS || grid[q][p] > 0; // Si la posicion horizontal es menor que 0 o mayor que el número de columnas, o la posición vertical es mayor que el número de filas, o la posición del grid es mayor que 0, devuelve true.
         }
-        
-        
+    }));
+}
+
+let piezaObjetoCambiada = null; // 
+let piezaCambiada = false; 
+
+
+function guardarPieza() {
+    
+    if(colision(piezaObjeto.x+1 , piezaObjeto.y) || colision(piezaObjeto.x-1 , piezaObjeto.y)){
+        return;
     }
-    return false;
-}
 
-let heldPiece = null; // initialize heldPiece as null
-
-// function to hold a piece
-function holdPiece() {
-  if (heldPiece === null) {
-    heldPiece = currentPiece;
-    currentPiece = nextPiece;
-    nextPiece = generateRandomPiece(); // generate a new next piece
-    drawNextPiece(); // update next piece display
-  } else {
-    // swap heldPiece and currentPiece
-    let tempPiece = heldPiece;
-    heldPiece = currentPiece;
-    currentPiece = tempPiece;
-  }
-  drawHeldPiece(); // update held piece display
-}
-
-// function to display the held piece
-function drawHeldPiece() {
-  let heldCanvas = document.getElementById('held-piece');
-  let heldCtx = heldCanvas.getContext('2d');
-  heldCtx.clearRect(0, 0, heldCanvas.width, heldCanvas.height); // clear the canvas
-
-  if (heldPiece !== null) {
-    let blockWidth = heldCanvas.width / 5;
-    let blockHeight = heldCanvas.height / 5;
-    for (let i = 0; i < heldPiece.blocks.length; i++) {
-      let block = heldPiece.blocks[i];
-      let x = block.col * blockWidth;
-      let y = block.row * blockHeight;
-      heldCtx.fillStyle = block.color;
-      heldCtx.fillRect(x, y, blockWidth, blockHeight);
+    if(piezaCambiada){
+        return;
     }
-  }
+    
+    if (piezaObjetoCambiada === null) {
+
+        piezaObjetoCambiada = piezaObjeto.pieza;
+        piezaObjetoCambiada.x = 0;
+        piezaObjetoCambiada.y = 0;
+                
+        piezaObjeto = generarPiezaRandom();
+        piezaObjeto.y = 0 // Resetear posición de la nueva pieza
+        renderizarPieza(); 
+    
+    } else {
+        // Cambiar pieza
+        let piezaTemporal = piezaObjetoCambiada;
+        piezaObjetoCambiada = piezaObjeto.pieza;
+        piezaObjeto.pieza = piezaTemporal;
+    }
+
+    piezaCambiada = true;  
+    piezaObjeto.y = 0;
+    renderizarPieza(); 
+          
+    
 }
+
+
 
 
 
@@ -260,17 +265,13 @@ renderizarPieza();
 
 setInterval(nuevoEstadoJuego, 500)
 
+// Eventos de teclado
 document.addEventListener("keydown", function(e){
     let key = e.code;
-    console.log(key)
-    if(key == "ArrowDown"){
-        moverAbajo();
-    } else if(key == "ArrowLeft"){
-        moverIzq();
-    } else if(key == "ArrowRight"){
-        moverDer();
-    } else if(key == "KeyC"){
-        rotar();
+    
+    const fn = keyMap[key];
+    if (fn) {
+        fn();
     }
 
 })
@@ -300,4 +301,6 @@ function rotar(){
     }
 
 }
+
+
 
